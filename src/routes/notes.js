@@ -1,22 +1,15 @@
 import express from 'express';
-import NotesService from '../services/notes.service';
+import NotesController from '../controllers/notes.controller';
 const router = express.Router();
 
-router.get('/', function (req, res, next) {
-  const notesService = new NotesService();
-  res.send(notesService.allNotes());
-});
+router.get('/', NotesController.allNotes);
 
-router.get('/:id', function (req, res, next) {
-  const notesService = new NotesService();
-  const { id } = req.params;
-  res.send(notesService.noteById(id));
-});
+router.get('/:id', NotesController.noteById);
 
-router.delete('/:id', function (req, res, next) {
-  const notesService = new NotesService();
-  const { id } = req.params;
-  res.send(notesService.deleteById(id));
-});
+router.post('/', NotesController.addNote);
+
+router.delete('/:id', NotesController.deleteById);
+
+router.patch('/:id', NotesController.patchNoteById);
 
 export default router;

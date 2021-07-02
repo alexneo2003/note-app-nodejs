@@ -6,7 +6,17 @@ const uuidv4 = () => {
   });
 };
 
-export default class NotesService {
+const getDatesTextFromContent = (contentText) => {
+  const matcher = /\d\/\d\/\d*/gm;
+  let found = contentText.match(matcher);
+  let dates = '';
+  if (found && found.length) {
+    dates = found.join(', ');
+  }
+  return dates;
+};
+
+class NotesService {
   notes = [
     {
       id: '4962cb19-cc47-9623-9621-012958773ebf',
@@ -70,13 +80,51 @@ export default class NotesService {
   }
 
   noteById(id) {
-    return this.notes.filter((note) => note.id === id);
+    return this.notes.find((note) => note.id === id);
+  }
+
+  addNote(note) {
+    let d = new Date();
+    let currDate = d.getDate();
+    let currMonth = d.getMonth() + 1;
+    let currYear = d.getFullYear();
+    const formatedNow = `${currDate}/${currMonth}/${currYear}`;
+
+    const newNote = {
+      ...note,
+      id: uuidv4(),
+      dates: getDatesTextFromContent(note.content),
+      created: formatedNow,
+      archived: false,
+    };
+
+    this.notes.push(newNote);
+    return newNote;
   }
 
   deleteById(id) {
-    const newNotes = this.notes.filter((note) => note.id !== id);
-    const deletedNote = this.notes.filter((note) => note.id === id);
-    this.notes = newNotes.slice();
+    const note = this.notes.find((note) => note.id === id);
+    const deletedNote = this.notes.splice(note, 1);
+    console.log('this.notes', this.notes);
     return deletedNote;
   }
+
+  patchNoteById(id, note) {
+    const objIndex = this.notes.findIndex((obj) => obj.id === id);
+    if (objIndex < 0) {
+      return { error: 'Note not found' };
+    }
+    let currentNote = this.notes[objIndex];
+    const allowedPatchFields = ['name', 'category', 'content', 'archived'];
+
+    for (let field of allowedPatchFields) {
+      if (field in note) {
+        currentNote[field] = note[field];
+      }
+    }
+    this.notes.splice(objIndex, 1, currentNote);
+    return currentNote;
+  }
 }
+
+export default new NotesService();
