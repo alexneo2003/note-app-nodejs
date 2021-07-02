@@ -1,4 +1,5 @@
 import NotesService from '../services/notes.service';
+import Joi from 'joi';
 
 class NotesController {
   allNotes(req, res) {
@@ -9,21 +10,31 @@ class NotesController {
     const { id } = req.params;
     if (!id) {
       res.status(404).send('ID param required');
+      return;
     }
-    res.status(200).send(NotesService.noteById(id));
+
+    const note = NotesService.noteById(id);
+
+    if (note.hasOwnProperty('error')) {
+      res.status(404).send(note);
+    } else {
+      res.status(200).send(note);
+    }
   }
 
   addNote(req, res) {
-    const { name, category, content } = req.body;
-    if (!name) {
-      res.status(404).send({ error: 'name param required' });
-    } else if (!category) {
-      res.status(404).send({ error: 'category param required' });
-    } else if (!content) {
-      res.status(404).send({ error: 'content param required' });
-    } else {
-      res.status(200).send(NotesService.addNote({ name, category, content }));
+    const schema = Joi.object({
+      name: Joi.string().min(3).required(),
+      category: Joi.string().min(3).required(),
+      content: Joi.string().min(3).required(),
+    });
+
+    const isValid = schema.validate(req.body);
+    if (isValid.error) {
+      res.status(404).send({ error: isValid.error.details[0].message });
+      return;
     }
+    res.status(200).send(NotesService.addNote(req.body));
   }
 
   deleteById(req, res) {
@@ -35,20 +46,31 @@ class NotesController {
     const { id } = req.params;
     if (!id) {
       res.status(404).send({ error: 'ID param required' });
+      return;
     }
-    const { name, category, content, archived } = req.body;
-    console.log('id, name, category, content ', id, name, category, content);
-    const patchedNote = NotesService.patchNoteById(id, {
-      name,
-      category,
-      content,
-      archived,
+
+    const schema = Joi.object({
+      name: Joi.string().min(3),
+      category: Joi.string().min(3),
+      content: Joi.string().min(3),
+      archived: Joi.boolean().strict(),
     });
+
+    const isValid = schema.validate(req.body);
+    if (isValid.error) {
+      res.status(404).send({ error: isValid.error.details[0].message });
+      return;
+    }
+    const patchedNote = NotesService.patchNoteById(id, req.body);
     if (patchedNote.hasOwnProperty('error')) {
       res.status(404).send(patchedNote);
     } else {
       res.status(200).send(patchedNote);
     }
+  }
+
+  stats(req, res) {
+    res.status(200).send(NotesService.stats());
   }
 }
 

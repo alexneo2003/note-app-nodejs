@@ -2,6 +2,8 @@ import express from 'express';
 import NotesController from '../controllers/notes.controller';
 const router = express.Router();
 
+router.get('/stats/', NotesController.stats);
+
 router.get('/', NotesController.allNotes);
 
 router.get('/:id', NotesController.noteById);

@@ -80,7 +80,11 @@ class NotesService {
   }
 
   noteById(id) {
-    return this.notes.find((note) => note.id === id);
+    const note = this.notes.find((note) => note.id === id);
+    if (!note) {
+      return { error: 'Note not found' };
+    }
+    return note;
   }
 
   addNote(note) {
@@ -120,10 +124,31 @@ class NotesService {
     for (let field of allowedPatchFields) {
       if (field in note) {
         currentNote[field] = note[field];
+        if (field === 'content') {
+          currentNote.dates = getDatesTextFromContent(note[field]);
+        }
       }
     }
     this.notes.splice(objIndex, 1, currentNote);
     return currentNote;
+  }
+
+  stats() {
+    const categories = Array.from(
+      new Set(this.notes.map((note) => note.category))
+    ).sort();
+
+    return categories.map((category) => {
+      return {
+        category,
+        active: this.notes.filter(
+          (note) => note.category === category && !note.archived
+        ).length,
+        archived: this.notes.filter(
+          (note) => note.category === category && note.archived
+        ).length,
+      };
+    });
   }
 }
 
